@@ -11,6 +11,7 @@
 
 // Assignment 3 CoW: use PTE bits [9, 8] RSW to represent CoW PTE.
 #define PTE_A3_COW (1L << 8)  // CoW
+struct mm;
 int8 page_refcnt_increase(uint64 pa);
 int8 page_refcnt_decrease(uint64 pa);
 int cow_copy_page(struct mm *mm, pte_t *pte);
