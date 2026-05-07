@@ -141,6 +141,7 @@ int cow_copy_page(struct mm *mm, pte_t *pte) {
 
     uint64 pa = PTE2PA(*pte);
     if (page_refcnt_get(pa) == 1) {
+        // No other references; just clear CoW and make it writable.
         uint64 flags = PTE_FLAGS(*pte);
         flags = (flags | PTE_W) & ~PTE_A3_COW;
         *pte = PA2PTE(pa) | flags | PTE_V;
