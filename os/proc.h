@@ -44,6 +44,12 @@ struct cpu {
 
 enum procstate { UNUSED, USED, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
+enum {
+    PRIO_MIN     = 0,
+    PRIO_MAX     = 7,
+    PRIO_DEFAULT = 0,
+};
+
 // Per-process state
 struct proc {
     spinlock_t lock;
@@ -57,6 +63,7 @@ struct proc {
     struct proc *parent;  // Parent process
 
     int index;
+    int priority;
     struct mm *mm;
     struct vma *vma_brk;                // special vma for heap, included in mm->vma list.
     uint64 brk;                         // end address of heap
@@ -91,6 +98,7 @@ void exit(int);
 int kill(int pid);
 int iskilled(struct proc *);
 void setkilled(struct proc *, int reason);
+int setpriority(int priority);
 
 void sleep(void *chan, spinlock_t *lk);
 void wakeup(void *chan);

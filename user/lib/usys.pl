@@ -24,10 +24,10 @@ entry("getpid");
 entry("getppid");
 entry("sleep");
 entry("yield");
+entry("setpriority");
 entry("sbrk");
 entry("mmap");
 entry("read");
 entry("write");
 entry("gettimeofday");
 entry("ktest");
-

@@ -5,28 +5,39 @@
 #include "queue.h"
 #include "trap.h"
 
-static struct queue task_queue;
+static struct queue task_queues[PRIO_MAX + 1];
 
 // defined in proc.c
 extern struct proc *pool[NPROC];
 
 void sched_init() {
-    init_queue(&task_queue);
+    for (int i = PRIO_MIN; i <= PRIO_MAX; i++) {
+        init_queue(&task_queues[i]);
+    }
 }
 
 static struct proc *fetch_task() {
-    struct proc *proc = pop_queue(&task_queue);
-    if (proc != NULL)
-        debugf("fetch task (pid=%d) from task queue", proc->pid);
-    return proc;
+    for (int prio = PRIO_MIN; prio <= PRIO_MAX; prio++) {
+        struct proc *proc = pop_queue(&task_queues[prio]);
+        if (proc != NULL) {
+            debugf("fetch task (pid=%d) from task queue (prio=%d)", proc->pid, prio);
+            return proc;
+        }
+    }
+    return NULL;
 }
 
 void add_task(struct proc *p) {
     assert(p->state == RUNNABLE);
     assert(holding(&p->lock));
 
-    push_queue(&task_queue, p);
-    debugf("add task (pid=%d) to task queue", p->pid);
+    int prio = p->priority;
+    if (prio < PRIO_MIN)
+        prio = PRIO_MIN;
+    if (prio > PRIO_MAX)
+        prio = PRIO_MAX;
+    push_queue(&task_queues[prio], p);
+    debugf("add task (pid=%d) to task queue (prio=%d)", p->pid, prio);
 }
 
 static int all_dead() {

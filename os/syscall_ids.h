@@ -11,6 +11,7 @@
 
 #define SYS_sleep 10
 #define SYS_yield 11
+#define SYS_setpriority 12
 
 #define SYS_sbrk 20
 #define SYS_mmap 21

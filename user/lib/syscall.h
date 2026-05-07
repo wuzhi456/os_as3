@@ -15,6 +15,7 @@ int getppid();
 
 int sleep(int ticks);
 void yield();
+int setpriority(int priority);
 
 void *sbrk(int increment);
 
