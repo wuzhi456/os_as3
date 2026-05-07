@@ -96,6 +96,7 @@ found:
     p->sleep_chan = NULL;
     p->pid        = allocpid();
     p->state      = USED;
+    p->priority   = PRIO_DEFAULT;
 
     // fork or exec(load_user_elf) will initialize these:
     p->mm      = NULL;
@@ -210,6 +211,7 @@ int fork() {
     // Cause fork to return 0 in the child.
     np->trapframe->a0 = 0;
     np->parent        = p;
+    np->priority      = p->priority;
     np->state         = RUNNABLE;
     add_task(np);
     release(&np->lock);
@@ -363,6 +365,17 @@ int kill(int pid) {
         release(&p->lock);
     }
     return -EINVAL;
+}
+
+int setpriority(int priority) {
+    if (priority < PRIO_MIN || priority > PRIO_MAX) {
+        return -EINVAL;
+    }
+    struct proc *p = curr_proc();
+    acquire(&p->lock);
+    p->priority = priority;
+    release(&p->lock);
+    return 0;
 }
 
 void setkilled(struct proc *p, int reason) {

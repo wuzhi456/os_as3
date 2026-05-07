@@ -133,6 +133,10 @@ int64 sys_yield() {
     return 0;
 }
 
+int64 sys_setpriority(int64 priority) {
+    return setpriority(priority);
+}
+
 int64 sys_sbrk(int64 n) {
     int64 ret;
     struct proc *p = curr_proc();
@@ -213,6 +217,9 @@ void syscall() {
             break;
         case SYS_yield:
             ret = sys_yield();
+            break;
+        case SYS_setpriority:
+            ret = sys_setpriority(args[0]);
             break;
         case SYS_sbrk:
             ret = sys_sbrk(args[0]);

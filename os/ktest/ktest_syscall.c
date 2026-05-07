@@ -1,5 +1,6 @@
 #include "defs.h"
 #include "ktest.h"
+#include "trap.h"
 
 extern int64 freepages_count;
 extern allocator_t kstrbuf;
@@ -25,6 +26,12 @@ uint64 ktest_syscall(uint64 args[6]) {
             return freepages_count;
         case KTEST_GET_NRSTRBUF:
             return kstrbuf.available_count;
+        case KTEST_GET_TICKS: {
+            acquire(&tickslock);
+            uint64 value = ticks;
+            release(&tickslock);
+            return value;
+        }
         case KTEST_A3_COPY_TO_USER:
             assignment3_copytouser(args[1], args[2]);
             return 0;
