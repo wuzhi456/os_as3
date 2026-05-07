@@ -13,6 +13,14 @@ static allocator_t vma_allocator;
 #define NR_OF_PAGES (PHYS_MEM_SIZE / PGSIZE)
 int8 refcnt[NR_OF_PAGES];
 
+static int8 page_refcnt_get(uint64 pa) {
+    assert(PGALIGNED(pa));
+    assert(VALID_PHYS_ADDR(pa));
+    uint64 idx = (pa - RISCV_DDR_BASE) / PGSIZE;
+    assert(idx < NR_OF_PAGES);  // never overflow
+    return refcnt[idx];
+}
+
 /**
  * @brief increase the refcnt for pa, and return the *updated* refcnt.
  */
@@ -132,6 +140,13 @@ int cow_copy_page(struct mm *mm, pte_t *pte) {
         return -EINVAL;
 
     uint64 pa = PTE2PA(*pte);
+    if (page_refcnt_get(pa) == 1) {
+        uint64 flags = PTE_FLAGS(*pte);
+        flags = (flags | PTE_W) & ~PTE_A3_COW;
+        *pte = PA2PTE(pa) | flags | PTE_V;
+        sfence_vma();
+        return 0;
+    }
     void *newpa = kallocpage();
     if (!newpa) {
         errorf("kallocpage");
