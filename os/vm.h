@@ -13,6 +13,7 @@
 #define PTE_A3_COW (1L << 8)  // CoW
 int8 page_refcnt_increase(uint64 pa);
 int8 page_refcnt_decrease(uint64 pa);
+int cow_copy_page(struct mm *mm, pte_t *pte);
 
 // These two macros are used to convert between kernel virtual address and physical address,
 //  BUT ONLY FOR symbols defined in kernel image.

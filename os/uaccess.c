@@ -9,13 +9,23 @@
 // Return 0 on success, -1 on error.
 int copy_to_user(struct mm *mm, uint64 __user dstva, char *src, uint64 len) {
     uint64 n, va0, pa0;
+    pte_t *pte;
 
     while (len > 0) {
         va0 = PGROUNDDOWN(dstva);
-        pa0 = walkaddr(mm, va0);
-        // Assignment 3 CoW: do CoW if the page is marked as CoW page.
-        if (pa0 == 0)
+        pte = walk(mm, va0, 0);
+        if (pte == NULL || (*pte & PTE_V) == 0 || (*pte & PTE_U) == 0)
             return -EINVAL;
+        if ((*pte & PTE_W) == 0) {
+            if (*pte & PTE_A3_COW) {
+                int ret = cow_copy_page(mm, pte);
+                if (ret < 0)
+                    return ret;
+            } else {
+                return -EINVAL;
+            }
+        }
+        pa0 = PTE2PA(*pte);
         n = PGSIZE - (dstva - va0);
         if (n > len)
             n = len;

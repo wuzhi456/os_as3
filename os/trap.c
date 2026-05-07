@@ -125,7 +125,6 @@ static void handle_pgfault(void) {
     acquire(&mm->lock);
     release(&p->lock);
     pte = walk(mm, addr, 0);
-    release(&mm->lock);
 
     //	docs: Volume II: RISC-V Privileged Architectures V1.10, Page 61,
     //		> Two schemes to manage the A and D bits are permitted:
@@ -134,17 +133,30 @@ static void handle_pgfault(void) {
     //		> Standard supervisor software should be written to assume either or both PTE update schemes may be in effect.
 
     if (pte != NULL && (*pte & PTE_V) && (*pte & PTE_U)) {
+        if (cause == StorePageFault && (*pte & PTE_A3_COW)) {
+            int ret = cow_copy_page(mm, pte);
+            release(&mm->lock);
+            if (ret < 0)
+                setkilled(p, -2);
+            return;
+        }
         if (!(*pte & PTE_A) || (cause == StorePageFault && !(*pte & PTE_D))) {
             // page fault possibly due to missing A/D bit
             // - Load/IF PageFault: Missing A bit
             // - Store PageFault  : Missing A/D bit
             *pte |= PTE_A;
             if (cause == StorePageFault)
-                *pte |= PTE_D;    
+                *pte |= PTE_D;
+            release(&mm->lock);
+            return;
+        }
+        if (cause == StorePageFault && (*pte & PTE_W) == 0) {
+            release(&mm->lock);
+            setkilled(p, -2);
             return;
         }
     }
-    // Assignment 3 CoW: do copy here.
+    release(&mm->lock);
 
 
     // otherwise, it is a page fault due to invalid address
